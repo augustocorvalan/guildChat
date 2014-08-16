@@ -39,6 +39,7 @@ var ChatBox = React.createClass({
           <div className="chatBox">
             <h1>Give Me Trees!</h1>
             <ChatList data={ this.state.data } />
+            <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
           </div>
         );
@@ -65,6 +66,12 @@ var ChatList = React.createClass({
 });
 
 var ChatInput = React.createClass({
+    handleFocus: function () {
+        socket.emit('started typing', username);
+    },
+    handleBlur: function () {
+        socket.emit('stopped typing', username);
+    },
     handleSubmit: function () {
         var message = this.refs.message.getDOMNode().value.trim();
         if (!message) {
@@ -77,7 +84,10 @@ var ChatInput = React.createClass({
     render: function() {
         return (
             <form className="ChatInput" onSubmit={this.handleSubmit}>
-                <input type="text" ref="message" placeholder="Say some shit" />
+                <input type="text" ref="message" placeholder="Say some shit" 
+                    onFocus={this.handleFocus}
+                    onBlur={this.handleBlur}
+                />
                 <input type="submit" value="Post" />
             </form>
         );
@@ -119,6 +129,26 @@ var ChatLogin = React.createClass({
             <input type="text" ref="username" placeholder="What's in a name?" />
             <input type="submit" value="Post" />
         </form>    
+    }
+});
+
+var PendingMessageNotice = React.createClass({
+    getInitialState: function () {
+        return {data: ''};
+    },
+    componentDidMount: function () {
+        socket
+            .on('started typing', function (user) {
+                this.setState({
+                    data: user + ' is typing...'
+                })
+            })
+            .on('stopped typing', function (user) {
+                this.setState({ data: ''});
+            });
+    },
+    render: function () {
+        return <div className="PendingMessage">{this.state.pending}</div>
     }
 });
 
