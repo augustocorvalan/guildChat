@@ -10,7 +10,7 @@ var ChatRoom = React.createClass({
     },
     render: function () {
         if (this.state.username) {
-          return <ChatBox url="some/url" pollInterval={1000} />
+          return <ChatBox />
         } else {
           return <ChatLogin onSubmit={this.handleLogin} />
         }
@@ -37,7 +37,6 @@ var ChatBox = React.createClass({
     render: function() {
         return (
           <div className="chatBox">
-            <h1>Give Me Trees!</h1>
             <ChatList data={ this.state.data } />
             <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
@@ -45,7 +44,6 @@ var ChatBox = React.createClass({
         );
     }
 });
-
 
 var ChatList = React.createClass({
   render: function() {
@@ -83,7 +81,7 @@ var ChatInput = React.createClass({
     },
     render: function() {
         return (
-            <form className="ChatInput" onSubmit={this.handleSubmit}>
+            <form className="chatInput" onSubmit={this.handleSubmit}>
                 <input type="text" ref="message" placeholder="Say some shit" 
                     onFocus={this.handleFocus}
                     onBlur={this.handleBlur}
@@ -105,10 +103,10 @@ var ChatMessage = React.createClass({
         }
 
         return (
-            <div className="ChatMessage">
-                <p class="Author">{author}</p>
-                <p class="Message">{this.props.children}</p>
-                <p class="Timestamp">{this.props.timestamp}</p>
+            <div className="chatMessage">
+                <p class="author">{author}</p>
+                <p class="message">{this.props.children}</p>
+                <p class="timestamp">{this.props.timestamp}</p>
             </div>
         )
     }
@@ -125,7 +123,7 @@ var ChatLogin = React.createClass({
         return false;
     },
     render: function () {
-        return <form className="ChatLogin" onSubmit={this.handleSubmit}>
+        return <form className="chatLogin" onSubmit={this.handleSubmit}>
             <input type="text" ref="username" placeholder="What's in a name?" />
             <input type="submit" value="Post" />
         </form>    
@@ -148,7 +146,7 @@ var PendingMessageNotice = React.createClass({
             });
     },
     render: function () {
-        return <div className="PendingMessage">{this.state.pending}</div>
+        return <div className="pendingMessage">{this.state.pending}</div>
     }
 });
 
