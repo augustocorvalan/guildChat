@@ -1,3 +1,3 @@
 guildChat
 =========
-In the name of the Tree Cake Gods
+A simple chat service to try out React running on top of Node
