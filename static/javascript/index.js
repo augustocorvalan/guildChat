@@ -22,10 +22,10 @@ var ChatBox = React.createClass({
         return {data: []};
     },
     componentDidMount: function () {
+        var that = this;
         socket.on('chat message', function (message) {
-            this.setMessage(message);
+            that.setMessage(message);
         });
-        setInterval(this.loadCommentFromServer, this.props.pollInterval);
     },
     setMessage: function (message) {
         this.setState({data:this.state.data.concat(message)});
