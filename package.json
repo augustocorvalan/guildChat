@@ -1,7 +1,7 @@
 {
-  "name": "socket-chat-example",
+  "name": "guild-chat",
   "version": "0.0.1",
-  "description": "my first socket.io app",
+  "description": "chat with your guild mates",
   "dependencies": {
     "express": "^4.8.4",
     "socket.io": "^1.0.6"

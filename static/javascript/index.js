@@ -88,7 +88,7 @@ var ChatMessage = React.createClass({
     render: function () {
         var author;
 
-        if (this.props.author = username) {
+        if (this.props.author === username) {
             author = 'me'
         } else {
             author = this.props.author;
