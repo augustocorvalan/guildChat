@@ -1,5 +1,6 @@
 /** @jsx React.DOM */
 var username = localStorage.getItem('username');
+var socket = io();
 
 var ChatRoom = React.createClass({
     getInitialState: function () {
@@ -17,14 +18,31 @@ var ChatRoom = React.createClass({
     }
 });
 
+var ChatLogin = React.createClass({
+    handleSubmit: function () {
+        username = this.refs.username.getDOMNode().value.trim();
+        if (username) {
+            this.props.onSubmit(username);
+            localStorage.setItem('username', username);
+        }
+        return false;
+    },
+    render: function () {
+        return <form className="chatLogin" onSubmit={this.handleSubmit}>
+            <input type="text" ref="username" placeholder="What's in a name?" />
+            <input type="submit" value="Post" />
+        </form>    
+    }
+});
+
 var ChatBox = React.createClass({
     getInitialState: function () {
         return {data: []};
     },
     componentDidMount: function () {
-        var that = this;
+        var self = this;
         socket.on('chat message', function (message) {
-            that.setMessage(message);
+            self.setMessage(message);
         });
     },
     setMessage: function (message) {
@@ -37,7 +55,7 @@ var ChatBox = React.createClass({
     render: function() {
         return (
           <div className="chatBox">
-            <ChatList data={ this.state.data } />
+            <ChatList data={this.state.data} />
             <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
           </div>
@@ -63,6 +81,26 @@ var ChatList = React.createClass({
   }
 });
 
+var PendingMessageNotice = React.createClass({
+    getInitialState: function () {
+        return {data: ''};
+    },
+    componentDidMount: function () {
+        socket
+            .on('started typing', function (user) {
+                this.setState({
+                    data: user + ' is typing...'
+                })
+            })
+            .on('stopped typing', function (user) {
+                this.setState({ data: ''});
+            });
+    },
+    render: function () {
+        return <div className="pendingMessage">{this.state.data}</div>
+    }
+});
+
 var ChatInput = React.createClass({
     handleFocus: function () {
         socket.emit('started typing', username);
@@ -72,11 +110,10 @@ var ChatInput = React.createClass({
     },
     handleSubmit: function () {
         var message = this.refs.message.getDOMNode().value.trim();
-        if (!message) {
-            return false;
+        if (message) {
+            this.props.onCommentSubmit({message: message, author: username, timestamp: new Date().toString()});
+            this.refs.message.getDOMNode().value = '';
         }
-        this.props.onCommentSubmit({message: message, author: username, timestamp: new Date().toString()});
-        this.refs.message.getDOMNode().value = '';
         return false;
     },
     render: function() {
@@ -94,13 +131,7 @@ var ChatInput = React.createClass({
 
 var ChatMessage = React.createClass({
     render: function () {
-        var author;
-
-        if (this.props.author === username) {
-            author = 'me'
-        } else {
-            author = this.props.author;
-        }
+        var author = this.props.author === username ? 'me': this.props.author;
 
         return (
             <div className="chatMessage">
@@ -109,44 +140,6 @@ var ChatMessage = React.createClass({
                 <p class="timestamp">{this.props.timestamp}</p>
             </div>
         )
-    }
-});
-
-var ChatLogin = React.createClass({
-    handleSubmit: function () {
-        username = this.refs.username.getDOMNode().value.trim();
-        if (!username) {
-            return false;
-        }
-        this.props.onSubmit(username);
-        localStorage.setItem('username', username);
-        return false;
-    },
-    render: function () {
-        return <form className="chatLogin" onSubmit={this.handleSubmit}>
-            <input type="text" ref="username" placeholder="What's in a name?" />
-            <input type="submit" value="Post" />
-        </form>    
-    }
-});
-
-var PendingMessageNotice = React.createClass({
-    getInitialState: function () {
-        return {data: ''};
-    },
-    componentDidMount: function () {
-        socket
-            .on('started typing', function (user) {
-                this.setState({
-                    data: user + ' is typing...'
-                })
-            })
-            .on('stopped typing', function (user) {
-                this.setState({ data: ''});
-            });
-    },
-    render: function () {
-        return <div className="pendingMessage">{this.state.pending}</div>
     }
 });
 
