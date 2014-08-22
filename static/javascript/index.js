@@ -23,7 +23,6 @@ var ChatRoom = React.createClass({
     addUser: function (username) {
         if (users.indexOf(username) > -1) {return false;}
         users.push(username);
-        localStorage.setItem('users', users);
         this.setState({users: users});
 
     },
@@ -66,7 +65,7 @@ var ChatLogin = React.createClass({
         username = this.refs.username.getDOMNode().value.trim();
         if (username) {
             this.props.onSubmit(username);
-            localStorage.setItem('username', username);
+            users.push(username);
             socket.emit('new user', username);
         }
         return false;
@@ -99,7 +98,7 @@ var ChatBox = React.createClass({
     render: function() {
         return (
           <div className="chatBox">
-            <h1>Give Me Trees!</h1>
+            <h2>Give Me Trees!</h2>
             <ChatList data={this.state.data} />
             <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
@@ -159,7 +158,6 @@ var ChatInput = React.createClass({
             this.props.onCommentSubmit({message: message, author: username, timestamp: new Date().toString()});
             this.refs.message.getDOMNode().value = '';
         }
-        debugger;
         return false;
     },
     render: function() {
