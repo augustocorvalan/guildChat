@@ -1,20 +1,62 @@
 /** @jsx React.DOM */
 var username = localStorage.getItem('username');
+var users = [];
 var socket = io();
 
 var ChatRoom = React.createClass({
     getInitialState: function () {
-        return {username: username};
+        return ({username: username},{users:users});
+    },
+    componentDidMount: function () {
+        var that = this;
+        socket.on('new user', function (othername) {
+            if (othername === username) {return false;}
+            that.addUser(othername);
+            socket.emit('user info', username);
+        });
+
+        socket.on('user info', function (username) {
+            that.addUser(username);
+        });
+
+    },
+    addUser: function (username) {
+        if (users.indexOf(username) > -1) {return false;}
+        users.push(username);
+        this.setState({users: users});
+
     },
     handleLogin: function (username) {
         this.setState({username:username})
+        this.addUser(username);
     },
     render: function () {
         if (this.state.username) {
-          return <ChatBox />
+          return (
+            <div className="chatRoom">
+                <ChatUsers users={this.state.users}/>
+                <ChatBox url="some/url" pollInterval={1000} />
+            </div> )
         } else {
           return <ChatLogin onSubmit={this.handleLogin} />
         }
+    }
+});
+
+var ChatUsers = React.createClass({
+    getInitialState : function () {
+        return {users : users};
+    },
+    render: function () {
+        var otherMembers;
+        otherMembers = this.props.users.map(function (user) {
+            return (<p>{user}</p>);
+        });
+        return (
+            <div className="chatUsers">
+                <h1>Users Online</h1>
+                {otherMembers}
+            </div> )
     }
 });
 
@@ -23,7 +65,8 @@ var ChatLogin = React.createClass({
         username = this.refs.username.getDOMNode().value.trim();
         if (username) {
             this.props.onSubmit(username);
-            localStorage.setItem('username', username);
+            users.push(username);
+            socket.emit('new user', username);
         }
         return false;
     },
@@ -55,6 +98,7 @@ var ChatBox = React.createClass({
     render: function() {
         return (
           <div className="chatBox">
+            <h2>Give Me Trees!</h2>
             <ChatList data={this.state.data} />
             <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
@@ -135,9 +179,9 @@ var ChatMessage = React.createClass({
 
         return (
             <div className="chatMessage">
-                <p class="author">{author}</p>
-                <p class="message">{this.props.children}</p>
-                <p class="timestamp">{this.props.timestamp}</p>
+                <p className="author">{author}</p>
+                <p className="message">{this.props.children}</p>
+                <p className="timestamp">{this.props.timestamp}</p>
             </div>
         )
     }
