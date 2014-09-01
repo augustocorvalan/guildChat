@@ -1,5 +1,11 @@
 /** @jsx React.DOM */
 var username = localStorage.getItem('username');
+var Bootstrap = window.ReactBootstrap;
+var Panel = Bootstrap.Panel;
+var Alert = Bootstrap.Alert;
+var Jumbotron = Bootstrap.Jumbotron;
+var Col = Bootstrap.Col;
+var Row = Bootstrap.Row;
 
 var ChatRoom = React.createClass({
     getInitialState: function () {
@@ -10,9 +16,17 @@ var ChatRoom = React.createClass({
     },
     render: function () {
         if (this.state.username) {
-          return <ChatBox />
+          return (
+                <ChatBox />
+            );
         } else {
-          return <ChatLogin onSubmit={this.handleLogin} />
+            return (
+                <Jumbotron>
+                    <h1>Welcome to the Guild</h1>
+                    <p>Login below to start</p>
+                    <ChatLogin onSubmit={this.handleLogin} />
+                </Jumbotron>
+            );
         }
     }
 });
@@ -36,7 +50,8 @@ var ChatBox = React.createClass({
     },
     render: function() {
         return (
-          <div className="chatBox">
+          <div className="chatBox container-fluid">
+            <WelcomeMessage />
             <ChatList data={ this.state.data } />
             <PendingMessageNotice />
             <ChatInput onCommentSubmit={this.handleCommentSubmit} />
@@ -49,14 +64,12 @@ var ChatList = React.createClass({
   render: function() {
     var chatNodes = this.props.data.map(function (message) {
         return (
-            <ChatMessage author={message.author} timestamp={message.timestamp}>
-                {message.message}
-            </ChatMessage>
+            <ChatMessage author={message.author} message={message.message} time={message.timestamp} />
         );
     });
 
     return (
-      <div className="chatList">
+      <div className="chatList clearfix">
         {chatNodes}
       </div>
     );
@@ -94,20 +107,21 @@ var ChatInput = React.createClass({
 
 var ChatMessage = React.createClass({
     render: function () {
-        var author;
+        var classes = 'blockquote-reverse';
+        var author = this.props.author;
 
         if (this.props.author === username) {
+            classes = '';
             author = 'me'
-        } else {
-            author = this.props.author;
         }
 
         return (
-            <div className="chatMessage">
-                <p class="author">{author}</p>
-                <p class="message">{this.props.children}</p>
-                <p class="timestamp">{this.props.timestamp}</p>
-            </div>
+                <Col xs={12}>
+                    <blockquote className={classes}>
+                        <p>{this.props.message}</p>
+                        <footer>{author}</footer>
+                    </blockquote>
+                </Col>
         )
     }
 });
@@ -123,10 +137,12 @@ var ChatLogin = React.createClass({
         return false;
     },
     render: function () {
-        return <form className="chatLogin" onSubmit={this.handleSubmit}>
-            <input type="text" ref="username" placeholder="What's in a name?" />
-            <input type="submit" value="Post" />
-        </form>    
+        return (
+            <form className="chatLogin" onSubmit={this.handleSubmit}>
+                <input type="text" ref="username" placeholder="What's in a name?" />
+                <input type="submit" value="Post" />
+            </form>    
+        )
     }
 });
 
@@ -146,7 +162,15 @@ var PendingMessageNotice = React.createClass({
             });
     },
     render: function () {
-        return <div className="pendingMessage">{this.state.pending}</div>
+        return <div className="pendingMessage">{this.state.data}</div>
+    }
+});
+
+var WelcomeMessage = React.createClass({
+    render: function () {
+        return <Alert bsStyle="success">
+           <strong>Welcome Friend</strong>
+        </Alert>
     }
 });
 
