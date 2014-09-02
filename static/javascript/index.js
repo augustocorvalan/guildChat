@@ -35,7 +35,7 @@ var ChatRoom = React.createClass({
           return (
             <div className="chatRoom">
                 <ChatUsers users={this.state.users}/>
-                <ChatBox url="some/url" pollInterval={1000} />
+                <ChatBox />
             </div> )
         } else {
           return <ChatLogin onSubmit={this.handleLogin} />
