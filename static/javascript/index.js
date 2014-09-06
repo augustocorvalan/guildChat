@@ -7,18 +7,43 @@ var Jumbotron = Bootstrap.Jumbotron;
 var Col = Bootstrap.Col;
 var Row = Bootstrap.Row;
 
+var users = [];
+var socket = io();
+
 var ChatRoom = React.createClass({
     getInitialState: function () {
-        return {username: username};
+        return ({username: username},{users:users});
+    },
+    componentDidMount: function () {
+        var that = this;
+        socket.on('new user', function (othername) {
+            if (othername === username) {return false;}
+            that.addUser(othername);
+            socket.emit('user info', username);
+        });
+
+        socket.on('user info', function (username) {
+            that.addUser(username);
+        });
+
+    },
+    addUser: function (username) {
+        if (users.indexOf(username) > -1) {return false;}
+        users.push(username);
+        this.setState({users: users});
+
     },
     handleLogin: function (username) {
         this.setState({username:username})
+        this.addUser(username);
     },
     render: function () {
         if (this.state.username) {
           return (
+            <div className="chatRoom">
+                <ChatUsers users={this.state.users}/>
                 <ChatBox />
-            );
+            </div> )
         } else {
             return (
                 <Jumbotron>
@@ -31,14 +56,50 @@ var ChatRoom = React.createClass({
     }
 });
 
+var ChatUsers = React.createClass({
+    getInitialState : function () {
+        return {users : users};
+    },
+    render: function () {
+        var otherMembers;
+        otherMembers = this.props.users.map(function (user) {
+            return (<p>{user}</p>);
+        });
+        return (
+            <div className="chatUsers">
+                <h1>Users Online</h1>
+                {otherMembers}
+            </div> )
+    }
+});
+
+var ChatLogin = React.createClass({
+    handleSubmit: function () {
+        username = this.refs.username.getDOMNode().value.trim();
+        if (username) {
+            localStorage.setItem('username', username);
+            this.props.onSubmit(username);
+            users.push(username);
+            socket.emit('new user', username);
+        }
+        return false;
+    },
+    render: function () {
+        return <form className="chatLogin" onSubmit={this.handleSubmit}>
+            <input type="text" ref="username" placeholder="What's in a name?" />
+            <input type="submit" value="Post" />
+        </form>    
+    }
+});
+
 var ChatBox = React.createClass({
     getInitialState: function () {
         return {data: []};
     },
     componentDidMount: function () {
-        var that = this;
+        var self = this;
         socket.on('chat message', function (message) {
-            that.setMessage(message);
+            self.setMessage(message);
         });
     },
     setMessage: function (message) {
@@ -76,6 +137,26 @@ var ChatList = React.createClass({
   }
 });
 
+var PendingMessageNotice = React.createClass({
+    getInitialState: function () {
+        return {data: ''};
+    },
+    componentDidMount: function () {
+        socket
+            .on('started typing', function (user) {
+                this.setState({
+                    data: user + ' is typing...'
+                })
+            })
+            .on('stopped typing', function (user) {
+                this.setState({ data: ''});
+            });
+    },
+    render: function () {
+        return <div className="pendingMessage">{this.state.data}</div>
+    }
+});
+
 var ChatInput = React.createClass({
     handleFocus: function () {
         socket.emit('started typing', username);
@@ -85,11 +166,10 @@ var ChatInput = React.createClass({
     },
     handleSubmit: function () {
         var message = this.refs.message.getDOMNode().value.trim();
-        if (!message) {
-            return false;
+        if (message) {
+            this.props.onCommentSubmit({message: message, author: username, timestamp: new Date().toString()});
+            this.refs.message.getDOMNode().value = '';
         }
-        this.props.onCommentSubmit({message: message, author: username, timestamp: new Date().toString()});
-        this.refs.message.getDOMNode().value = '';
         return false;
     },
     render: function() {
@@ -116,53 +196,13 @@ var ChatMessage = React.createClass({
         }
 
         return (
-                <Col xs={12}>
-                    <blockquote className={classes}>
-                        <p>{this.props.message}</p>
-                        <footer>{author}</footer>
-                    </blockquote>
-                </Col>
+            <Col xs={12}>
+                <blockquote className={classes}>
+                    <p>{this.props.message}</p>
+                    <footer>{author}</footer>
+                </blockquote>
+            </Col>
         )
-    }
-});
-
-var ChatLogin = React.createClass({
-    handleSubmit: function () {
-        username = this.refs.username.getDOMNode().value.trim();
-        if (!username) {
-            return false;
-        }
-        this.props.onSubmit(username);
-        localStorage.setItem('username', username);
-        return false;
-    },
-    render: function () {
-        return (
-            <form className="chatLogin" onSubmit={this.handleSubmit}>
-                <input type="text" ref="username" placeholder="What's in a name?" />
-                <input type="submit" value="Post" />
-            </form>    
-        )
-    }
-});
-
-var PendingMessageNotice = React.createClass({
-    getInitialState: function () {
-        return {data: ''};
-    },
-    componentDidMount: function () {
-        socket
-            .on('started typing', function (user) {
-                this.setState({
-                    data: user + ' is typing...'
-                })
-            })
-            .on('stopped typing', function (user) {
-                this.setState({ data: ''});
-            });
-    },
-    render: function () {
-        return <div className="pendingMessage">{this.state.data}</div>
     }
 });
 
@@ -173,7 +213,6 @@ var WelcomeMessage = React.createClass({
         </Alert>
     }
 });
-
 React.renderComponent(
   <ChatRoom />,
   document.getElementById('content')
